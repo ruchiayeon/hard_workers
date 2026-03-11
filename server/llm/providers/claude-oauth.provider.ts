@@ -36,7 +36,14 @@ export class ClaudeOAuthProvider implements LLMProvider {
         throw new Error('Claude OAuth 토큰이 만료되었습니다. 다시 로그인해주세요.')
       }
     }
-    return new Anthropic({ authToken: this.creds.accessToken })
+    const token = this.creds.accessToken
+    return new Anthropic({
+      authToken: token,
+      fetch: (url, init) => fetch(url as string, {
+        ...init,
+        headers: { ...(init?.headers as Record<string, string> ?? {}), 'anthropic-beta': 'oauth-2025-04-20' },
+      }),
+    })
   }
 
   async testConnection(): Promise<{ ok: boolean; error?: string }> {
@@ -91,12 +98,16 @@ export class ClaudeOAuthProvider implements LLMProvider {
           })),
         }
       }
-      return { role: m.role as 'user' | 'assistant', content: m.content as string }
+      // assistant 메시지 content가 JSON 문자열(tool_use 포함)일 수 있음
+      const content = typeof m.content === 'string'
+        ? (() => { try { const p = JSON.parse(m.content); return Array.isArray(p) ? p : m.content } catch { return m.content } })()
+        : m.content
+      return { role: m.role as 'user' | 'assistant', content: content as Anthropic.MessageParam['content'] }
     })
 
     const params: Anthropic.MessageCreateParams = {
       model: config.model,
-      max_tokens: config.maxTokens ?? 8192,
+      max_tokens: config.maxTokens ?? 32768,
       system: systemMsg?.content as string | undefined,
       messages: anthropicMessages,
       temperature: config.temperature ?? 0.7,
@@ -147,6 +158,16 @@ export class ClaudeOAuthProvider implements LLMProvider {
           toolInputJson = ''
         }
       } else if (event.type === 'message_stop') {
+        // max_tokens 도달로 content_block_stop 없이 끊긴 경우 처리
+        if (currentToolId && currentToolName && toolInputJson) {
+          try {
+            const input = JSON.parse(toolInputJson)
+            onChunk({ delta: '', done: false, toolCall: { id: currentToolId, name: currentToolName, input } })
+          } catch {
+            // JSON이 불완전하면 무시
+            console.warn(`[claude-oauth] incomplete tool call dropped: ${currentToolName}`)
+          }
+        }
         onChunk({ delta: '', done: true })
       }
     }

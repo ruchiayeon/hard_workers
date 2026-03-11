@@ -45,10 +45,13 @@ async function runAgent(
 
   // Tool-use loop: keep calling LLM until no more tool calls
   const MAX_TOOL_ROUNDS = 20
+  let agentDone = false
+
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     let roundText = ''
     const pendingToolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
 
+    console.log(`[runner] ${agent.name} round ${round + 1} start`)
     await provider.streamChat(conversationMessages, agent.llmConfig, (chunk) => {
       if (chunk.delta) {
         roundText += chunk.delta
@@ -65,8 +68,11 @@ async function runAgent(
       }
     }, tools)
 
+    console.log(`[runner] ${agent.name} round ${round + 1} done, toolCalls: ${pendingToolCalls.length}`)
+
     // No tool calls — agent is done
     if (pendingToolCalls.length === 0) {
+      agentDone = true
       sendSSE(res, {
         type: 'stream',
         taskId, agentId: agent.id, agentName: agent.name, agentRole, phase,
@@ -88,6 +94,7 @@ async function runAgent(
 
     // Execute tools and build tool results
     const toolResults = pendingToolCalls.map((tc) => {
+      console.log(`[runner] executing tool: ${tc.name}`)
       const result = executeFileTool(outputDir!, tc.name, tc.input)
       const statusText = result.isError ? '❌' : '✅'
       const logMsg = `\n${statusText} ${tc.name}(${JSON.stringify(tc.input).slice(0, 80)}) → ${result.content.slice(0, 100)}\n`
@@ -109,6 +116,15 @@ async function runAgent(
     conversationMessages.push({
       role: 'tool_result',
       content: toolResults,
+    })
+  }
+
+  // MAX_TOOL_ROUNDS 초과 시에도 done 전송
+  if (!agentDone) {
+    sendSSE(res, {
+      type: 'stream',
+      taskId, agentId: agent.id, agentName: agent.name, agentRole, phase,
+      delta: '', done: true,
     })
   }
 

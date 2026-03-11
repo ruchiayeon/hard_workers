@@ -5,7 +5,7 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { spawn } from 'child_process'
+import { spawn, exec } from 'child_process'
 
 const LOG_DIR = path.join(os.homedir(), '.crew-builder', 'logs')
 if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
@@ -15,15 +15,9 @@ const streams = new Map<string, fs.WriteStream>()
 function lockFile(agentId: string) { return path.join(LOG_DIR, `${agentId}.pid`) }
 function logFile(agentId: string) { return path.join(LOG_DIR, `${agentId}.log`) }
 
-function isProcessAlive(pid: number): boolean {
-  try { process.kill(pid, 0); return true } catch { return false }
-}
-
 function isTerminalAlive(agentId: string): boolean {
-  try {
-    const pid = parseInt(fs.readFileSync(lockFile(agentId), 'utf-8').trim(), 10)
-    return !isNaN(pid) && isProcessAlive(pid)
-  } catch { return false }
+  // lock 파일이 있으면 터미널이 열린 적 있다고 판단 (창이 닫혔으면 재오픈)
+  return fs.existsSync(lockFile(agentId))
 }
 
 function getStream(agentId: string): fs.WriteStream {
@@ -62,20 +56,19 @@ export function openAgentTerminal(agentId: string, agentName: string, role: stri
     '\n',
   ].join('\n'))
 
-  // Spawn detached PowerShell — gets its own window on Windows
-  const title = `${roleIcon} ${agentName} - Crew Builder`
-  const psScript = `$Host.UI.RawUI.WindowTitle='${title}'; Get-Content -Path '${logPath.replace(/'/g, "''")}' -Wait -Encoding UTF8`
+  // exec으로 start 명령 실행 → 새 CMD 창 생성
+  const title = `${roleIcon} ${agentName}`
+  const safeTitle = title.replace(/"/g, '')
+  const safePath = logPath.replace(/'/g, "''")
+  const cmd = `start "${safeTitle}" powershell -NoProfile -NoExit -Command "Get-Content -Path '${safePath}' -Wait -Encoding UTF8"`
 
-  const child = spawn('powershell', ['-NoProfile', '-Command', psScript], {
-    detached: true,
-    stdio: 'ignore',
+  exec(cmd, (err) => {
+    if (err) console.error('[agent-terminal] exec error:', err.message)
   })
-  child.unref()
+  console.log(`[agent-terminal] opened CMD for ${agentName}, log=${logPath}`)
 
-  // Save PID so we can check if it's alive later (even after server restart)
-  if (child.pid) {
-    fs.writeFileSync(lockFile(agentId), String(child.pid))
-  }
+  // PID 추적은 exec에서 불가하므로 log 파일 존재로 alive 판단
+  fs.writeFileSync(lockFile(agentId), '1')
 }
 
 export function writeToTerminal(agentId: string, text: string) {
@@ -97,6 +90,11 @@ export function writePhaseToTerminal(agentId: string, phase: string) {
 
 export function completeTerminal(agentId: string) {
   const stream = streams.get(agentId)
-  if (!stream || stream.destroyed) return
-  stream.write(`\n\n${'═'.repeat(60)}\n  ✅ 작업 완료\n${'═'.repeat(60)}\n`)
+  if (stream && !stream.destroyed) {
+    stream.write(`\n\n${'═'.repeat(60)}\n  ✅ 작업 완료\n${'═'.repeat(60)}\n`)
+    stream.end()
+    streams.delete(agentId)
+  }
+  // lock 삭제 → 다음 실행 시 새 창 열기
+  try { fs.unlinkSync(lockFile(agentId)) } catch { /* ignore */ }
 }

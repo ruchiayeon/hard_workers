@@ -39,7 +39,13 @@
       "Bash(taskkill //F //IM node.exe 2>/dev/null; sleep 1)",
       "Bash(cd D:/yeon/post_agent && npx tsc --noEmit 2>&1 | head -10)",
       "Bash(cd D:/yeon/post_agent && npx tsc --noEmit 2>&1 | head -5)",
-      "Bash(cd D:/yeon/post_agent && grep -n \"async streamChat\" server/llm/providers/*.ts)"
+      "Bash(cd D:/yeon/post_agent && grep -n \"async streamChat\" server/llm/providers/*.ts)",
+      "Bash(netstat:*)",
+      "Bash(cmd:*)",
+      "Bash(cd D:/yeon/post_agent && npx tsc --noEmit 2>&1)",
+      "mcp__terminal-grid__get_grid_info",
+      "Read(//c/Users/smt/Desktop/cowork/test/**)",
+      "Read(//c/Users/smt/.crew-builder/logs/**)"
     ]
   }
 }
