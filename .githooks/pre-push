@@ -1,0 +1,11 @@
+#!/bin/sh
+
+node scripts/update-readme.mjs
+
+if ! git diff --quiet -- README.md; then
+  echo "README.md was updated by scripts/update-readme.mjs."
+  echo "Please commit the README.md change before pushing."
+  exit 1
+fi
+
+exit 0

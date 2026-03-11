@@ -1,0 +1,40 @@
+{
+  "name": "crew-builder",
+  "version": "1.0.0",
+  "description": "Game-inspired AI agent team builder",
+  "scripts": {
+    "dev": "concurrently \"npx tsx server/index.ts\" \"npx vite\"",
+    "server": "npx tsx server/index.ts",
+    "client": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.37.0",
+    "@google/generative-ai": "^0.21.0",
+    "better-sqlite3": "^11.10.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "openai": "^4.86.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.3.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.1"
+  }
+}
