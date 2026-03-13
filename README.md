@@ -1,4 +1,4 @@
-# Crew Builder
+# Hard Workers
 
 RPG 테마의 멀티 AI 에이전트 협업 플랫폼.
 에이전트를 만들고, 팀을 구성하고, 미션을 주면 AI들이 알아서 협력합니다.
@@ -69,8 +69,8 @@ npm run build
 ### 데이터 저장 위치
 
 ```
-~/.crew-builder/crew-builder.db    (SQLite)
-~/.crew-builder/credentials.json   (API 키)
+~/.hard-workers/hard-workers.db    (SQLite)
+~/.hard-workers/credentials.json   (API 키)
 ```
 
 ---
@@ -80,7 +80,7 @@ npm run build
 ### Architecture
 
 ```
-crew-builder/
+hard-workers/
 ├── server/                  # Express 5 backend (port 3456)
 │   ├── index.ts             # REST API routes
 │   ├── crew/
@@ -194,3 +194,9 @@ File tools (`read_file`, `edit_file`) wait indefinitely (15s poll) for files tha
 - Card frames with border glow effects
 - Fonts: Rajdhani (UI), Press Start 2P (pixel headings)
 - Korean language interface
+
+---
+
+## License
+
+MIT License. 자유롭게 사용 가능하나, 사용 시 원작자 고지(저작권 문구 포함)가 필수입니다. 자세한 내용은 [LICENSE](./LICENSE) 참조.
