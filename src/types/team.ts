@@ -1,5 +1,13 @@
 import type { Agent } from './agent'
 
+export type RelationMode = 'solo' | 'collaborate' | 'hierarchical'
+
+export interface MemberRelation {
+  fromId: string  // hierarchical: supervisor
+  toId: string    // hierarchical: subordinate
+  mode: RelationMode
+}
+
 export interface Team {
   id: string
   name: string
@@ -7,6 +15,8 @@ export interface Team {
   leaderId: string
   memberIds: string[]
   outputDir?: string
+  defaultMode: RelationMode
+  relations: MemberRelation[]
   createdAt: number
   updatedAt: number
 }

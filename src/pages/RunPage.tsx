@@ -14,6 +14,13 @@ interface AgentOutput {
   status: AgentCardStatus
 }
 
+interface DiscussionState {
+  round: number
+  maxRounds: number
+  status: 'started' | 'continuing' | 'agreed'
+  opinions?: Array<{ agentId: string; agentName: string; agreed: boolean }>
+}
+
 export default function RunPage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
@@ -25,6 +32,7 @@ export default function RunPage() {
   const [savedPath, setSavedPath] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openTerminals, setOpenTerminals] = useState(false)
+  const [discussion, setDiscussion] = useState<DiscussionState | null>(null)
   const outputRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   const load = useCallback(async () => {
@@ -43,6 +51,7 @@ export default function RunPage() {
     setFinalResult(null)
     setSavedPath(null)
     setError(null)
+    setDiscussion(null)
 
     try {
       const response = await api.task.run({ teamId: selectedTeamId, prompt: prompt.trim(), openTerminals })
@@ -81,6 +90,13 @@ export default function RunPage() {
                 })
                 const el = outputRefs.current.get(data.agentId)
                 if (el) el.scrollTop = el.scrollHeight
+              } else if (data.type === 'discussion') {
+                setDiscussion({
+                  round: data.round,
+                  maxRounds: data.maxRounds,
+                  status: data.status,
+                  opinions: data.opinions,
+                })
               } else if (data.type === 'complete') {
                 setFinalResult(data.content)
                 if (data.savedPath) setSavedPath(data.savedPath)
@@ -106,6 +122,7 @@ export default function RunPage() {
 
   const phaseLabels: Record<string, string> = {
     planning: '🗺️ 계획 수립 중',
+    discussing: '💬 팀원 논의 중',
     executing: '⚡ 작업 실행 중',
     synthesizing: '🔗 결과 종합 중',
   }
@@ -198,6 +215,30 @@ export default function RunPage() {
 
       <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
         {error && <div className="card-frame border-red-500/40 p-4 text-red-400 text-sm">⚠ 오류: {error}</div>}
+
+        {discussion && (
+          <div className="card-frame border-blue-400/30 p-3 animate-fade-in">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-blue-400">💬</span>
+              <span className="text-blue-400 font-semibold text-sm">팀원 논의</span>
+              <span className="text-gray-500 text-xs">라운드 {discussion.round}/{discussion.maxRounds}</span>
+              {discussion.status === 'agreed' && <span className="text-green-400 text-xs ml-auto">✓ 전원 동의</span>}
+              {discussion.status === 'continuing' && <span className="text-yellow-400 text-xs ml-auto">논의 계속...</span>}
+              {discussion.status === 'started' && (
+                <span className="flex items-center gap-0.5 ml-auto"><span className="thinking-dot" /><span className="thinking-dot" /><span className="thinking-dot" /></span>
+              )}
+            </div>
+            {discussion.opinions && (
+              <div className="flex flex-wrap gap-2">
+                {discussion.opinions.map(o => (
+                  <span key={o.agentId} className={`text-xs px-2 py-0.5 rounded ${o.agreed ? 'bg-green-400/15 text-green-400' : 'bg-red-400/15 text-red-400'}`}>
+                    {o.agentName}: {o.agreed ? '동의' : '이의'}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {Array.from(outputs.values()).map((output) => (
           <div key={output.agentId} className="card-frame p-4 animate-fade-in">

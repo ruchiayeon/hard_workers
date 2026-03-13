@@ -45,7 +45,10 @@
       "Bash(cd D:/yeon/post_agent && npx tsc --noEmit 2>&1)",
       "mcp__terminal-grid__get_grid_info",
       "Read(//c/Users/smt/Desktop/cowork/test/**)",
-      "Read(//c/Users/smt/.crew-builder/logs/**)"
+      "Read(//c/Users/smt/.crew-builder/logs/**)",
+      "mcp__terminal-grid__read_cell",
+      "mcp__terminal-grid__send_to_cell",
+      "Bash(taskkill:*)"
     ]
   }
 }

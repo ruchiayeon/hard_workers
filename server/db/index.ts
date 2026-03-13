@@ -62,6 +62,14 @@ function migrate(db: Database.Database) {
     db.exec(`ALTER TABLE teams ADD COLUMN workspace TEXT`)
   } catch { /* column already exists */ }
 
+  // Add default_mode and relations columns to teams
+  try {
+    db.exec(`ALTER TABLE teams ADD COLUMN default_mode TEXT NOT NULL DEFAULT 'solo'`)
+  } catch { /* column already exists */ }
+  try {
+    db.exec(`ALTER TABLE teams ADD COLUMN relations TEXT NOT NULL DEFAULT '[]'`)
+  } catch { /* column already exists */ }
+
   // Migrate claude-cookie → claude-oauth
   db.exec(`
     UPDATE agents SET llm_config = REPLACE(llm_config, '"claude-cookie"', '"claude-oauth"')

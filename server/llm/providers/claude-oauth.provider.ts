@@ -67,7 +67,7 @@ export class ClaudeOAuthProvider implements LLMProvider {
 
     const response = await client.messages.create({
       model: config.model,
-      max_tokens: config.maxTokens ?? 4096,
+      max_tokens: Math.min(parseInt(String(config.maxTokens)) || 16384, 16384),
       system: systemMsg?.content as string | undefined,
       messages: userMessages as Anthropic.MessageParam[],
       temperature: config.temperature ?? 0.7,
@@ -107,7 +107,7 @@ export class ClaudeOAuthProvider implements LLMProvider {
 
     const params: Anthropic.MessageCreateParams = {
       model: config.model,
-      max_tokens: config.maxTokens ?? 32768,
+      max_tokens: Math.min(parseInt(String(config.maxTokens)) || 16384, 16384),
       system: systemMsg?.content as string | undefined,
       messages: anthropicMessages,
       temperature: config.temperature ?? 0.7,

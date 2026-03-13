@@ -12,7 +12,7 @@ const DEFAULT_CONFIG: LLMConfig = {
   provider: 'openai',
   model: 'gpt-4o',
   temperature: 0.7,
-  maxTokens: 4096,
+  maxTokens: 16384,
 }
 
 export default function AgentEditor({ agent, onSave, onClose }: Props) {
@@ -106,11 +106,10 @@ export default function AgentEditor({ agent, onSave, onClose }: Props) {
           {/* Access Type Indicator */}
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs text-gray-500">접근 방식:</span>
-            <span className={`text-xs px-2 py-0.5 rounded border ${
-              accessType === 'api' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+            <span className={`text-xs px-2 py-0.5 rounded border ${accessType === 'api' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
               accessType === 'account' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' :
-              'bg-green-500/20 text-green-400 border-green-500/30'
-            }`}>
+                'bg-green-500/20 text-green-400 border-green-500/30'
+              }`}>
               {accessType === 'api' ? '🔑 API 키' : accessType === 'account' ? '👤 계정 접근' : '🖥 로컬'}
             </span>
           </div>
@@ -123,11 +122,10 @@ export default function AgentEditor({ agent, onSave, onClose }: Props) {
                 <button
                   key={p}
                   onClick={() => handleProviderChange(p)}
-                  className={`px-2 py-1.5 rounded text-xs border transition-all ${
-                    llmConfig.provider === p
-                      ? 'bg-yellow-400/20 border-yellow-400/50 text-yellow-400'
-                      : 'border-game-border text-gray-400 hover:border-gray-500'
-                  }`}
+                  className={`px-2 py-1.5 rounded text-xs border transition-all ${llmConfig.provider === p
+                    ? 'bg-yellow-400/20 border-yellow-400/50 text-yellow-400'
+                    : 'border-game-border text-gray-400 hover:border-gray-500'
+                    }`}
                 >
                   {PROVIDER_LABELS[p]}
                 </button>
@@ -168,8 +166,8 @@ export default function AgentEditor({ agent, onSave, onClose }: Props) {
               <input
                 type="number"
                 className="input-field"
-                value={llmConfig.maxTokens ?? 4096}
-                onChange={(e) => setLlmConfig({ ...llmConfig, maxTokens: parseInt(e.target.value) || 4096 })}
+                value={llmConfig.maxTokens ?? 16384}
+                onChange={(e) => setLlmConfig({ ...llmConfig, maxTokens: parseInt(e.target.value) || 16384 })}
                 min={100}
                 max={128000}
               />

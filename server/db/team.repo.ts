@@ -10,6 +10,8 @@ function rowToTeam(row: Record<string, unknown>): Team {
     leaderId: row.leader_id as string,
     memberIds: JSON.parse(row.member_ids as string),
     outputDir: (row.workspace as string) || undefined,
+    defaultMode: (row.default_mode as string as Team['defaultMode']) ?? 'solo',
+    relations: JSON.parse((row.relations as string) || '[]'),
     createdAt: row.created_at as number,
     updatedAt: row.updated_at as number,
   }
@@ -28,18 +30,20 @@ export const teamRepo = {
 
   save(data: TeamCreate & { id?: string }): Team {
     const now = Date.now()
+    const defaultMode = data.defaultMode ?? 'solo'
+    const relations = JSON.stringify(data.relations ?? [])
     if (data.id) {
       getDb().prepare(`
-        UPDATE teams SET name=?, description=?, leader_id=?, member_ids=?, workspace=?, updated_at=?
+        UPDATE teams SET name=?, description=?, leader_id=?, member_ids=?, workspace=?, default_mode=?, relations=?, updated_at=?
         WHERE id=?
-      `).run(data.name, data.description ?? null, data.leaderId, JSON.stringify(data.memberIds), data.outputDir ?? null, now, data.id)
+      `).run(data.name, data.description ?? null, data.leaderId, JSON.stringify(data.memberIds), data.outputDir ?? null, defaultMode, relations, now, data.id)
       return this.get(data.id)!
     } else {
       const id = uuidv4()
       getDb().prepare(`
-        INSERT INTO teams (id, name, description, leader_id, member_ids, workspace, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(id, data.name, data.description ?? null, data.leaderId, JSON.stringify(data.memberIds), data.outputDir ?? null, now, now)
+        INSERT INTO teams (id, name, description, leader_id, member_ids, workspace, default_mode, relations, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(id, data.name, data.description ?? null, data.leaderId, JSON.stringify(data.memberIds), data.outputDir ?? null, defaultMode, relations, now, now)
       return this.get(id)!
     }
   },

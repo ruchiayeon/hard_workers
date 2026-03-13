@@ -140,7 +140,12 @@ app.post('/api/tasks/run', (req, res) => {
   res.setHeader('X-Task-Id', taskId)
   res.flushHeaders()
 
-  runCrew(res, taskId, leader, members, prompt, openTerminals ?? false, team.outputDir ?? undefined)
+  // Keepalive: send a comment every 15s so the proxy/browser doesn't drop the connection
+  const keepalive = setInterval(() => res.write(': keepalive\n\n'), 15000)
+  res.on('close', () => clearInterval(keepalive))
+
+  runCrew(res, taskId, leader, members, prompt, openTerminals ?? false, team.outputDir ?? undefined, team.defaultMode ?? 'solo', team.relations ?? [])
+    .finally(() => clearInterval(keepalive))
 })
 
 // ── LLM test ──────────────────────────────────────────────

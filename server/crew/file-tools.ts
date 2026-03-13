@@ -170,10 +170,26 @@ function searchInFiles(baseDir: string, pattern: string, searchPath: string, glo
   return results.length > 0 ? results.join('\n') : '검색 결과 없음'
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 /**
- * Execute a file tool and return the result
+ * Wait for a file to appear (created by another parallel agent).
+ * Checks every 15 seconds indefinitely until the file exists.
  */
-export function executeFileTool(baseDir: string, toolName: string, input: Record<string, unknown>): ToolResult {
+async function waitForFile(fullPath: string): Promise<void> {
+  while (!fs.existsSync(fullPath)) {
+    await sleep(15000)
+  }
+}
+
+/**
+ * Execute a file tool and return the result.
+ * read_file and edit_file will wait for the file if it doesn't exist yet
+ * (another parallel agent may be creating it).
+ */
+export async function executeFileTool(baseDir: string, toolName: string, input: Record<string, unknown>): Promise<ToolResult> {
   try {
     switch (toolName) {
       case 'list_files': {
@@ -186,7 +202,11 @@ export function executeFileTool(baseDir: string, toolName: string, input: Record
 
       case 'read_file': {
         const fullPath = safePath(baseDir, input.path as string)
-        if (!fs.existsSync(fullPath)) return { content: `파일이 존재하지 않습니다: ${input.path}`, isError: true }
+        if (!fs.existsSync(fullPath)) {
+          console.log(`[file-tools] read_file: 파일 대기 중... ${input.path}`)
+          await waitForFile(fullPath)
+          console.log(`[file-tools] read_file: 파일 발견! ${input.path}`)
+        }
         const stat = fs.statSync(fullPath)
         if (stat.size > MAX_FILE_SIZE) return { content: `파일이 너무 큽니다 (${(stat.size / 1024).toFixed(1)}KB > 100KB)`, isError: true }
         return { content: fs.readFileSync(fullPath, 'utf-8') }
@@ -201,7 +221,10 @@ export function executeFileTool(baseDir: string, toolName: string, input: Record
 
       case 'edit_file': {
         const fullPath = safePath(baseDir, input.path as string)
-        if (!fs.existsSync(fullPath)) return { content: `파일이 존재하지 않습니다: ${input.path}`, isError: true }
+        if (!fs.existsSync(fullPath)) {
+          console.log(`[file-tools] edit_file: 파일 대기 중... ${input.path}`)
+          await waitForFile(fullPath)
+        }
         const content = fs.readFileSync(fullPath, 'utf-8')
         const oldText = input.old_text as string
         if (!content.includes(oldText)) return { content: `텍스트를 찾을 수 없습니다: "${oldText.slice(0, 50)}..."`, isError: true }

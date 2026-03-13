@@ -1,7 +1,7 @@
 export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed'
 export type AgentRunStatus = 'idle' | 'streaming' | 'done' | 'error'
 export type AgentRole = 'leader' | 'member'
-export type RunPhase = 'planning' | 'executing' | 'synthesizing'
+export type RunPhase = 'planning' | 'discussing' | 'executing' | 'synthesizing'
 
 export interface Task {
   id: string

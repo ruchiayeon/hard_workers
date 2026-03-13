@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Agent } from '../types/agent'
-import type { Team } from '../types/team'
+import type { Team, RelationMode, MemberRelation } from '../types/team'
 import AgentCard from '../components/agent/AgentCard'
+import RelationEditor from '../components/team/RelationEditor'
 import { api } from '../api'
 
 export default function TeamPage() {
@@ -13,6 +14,9 @@ export default function TeamPage() {
   const [memberIds, setMemberIds] = useState<string[]>([])
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null)
   const [outputDir, setOutputDir] = useState<string | null>(null)
+  const [defaultMode, setDefaultMode] = useState<RelationMode>('solo')
+  const [relations, setRelations] = useState<MemberRelation[]>([])
+  const [showRelationEditor, setShowRelationEditor] = useState(false)
 
   const load = useCallback(async () => {
     const [a, t] = await Promise.all([
@@ -46,6 +50,8 @@ export default function TeamPage() {
       leaderId,
       memberIds,
       outputDir: outputDir ?? undefined,
+      defaultMode,
+      relations,
     })
     resetForm()
     load()
@@ -58,6 +64,8 @@ export default function TeamPage() {
     setLeaderId(team.leaderId)
     setMemberIds(team.memberIds)
     setOutputDir(team.outputDir ?? null)
+    setDefaultMode(team.defaultMode ?? 'solo')
+    setRelations(team.relations ?? [])
   }
 
   const handleDeleteTeam = async (team: Team) => {
@@ -78,6 +86,8 @@ export default function TeamPage() {
     setLeaderId(null)
     setMemberIds([])
     setOutputDir(null)
+    setDefaultMode('solo')
+    setRelations([])
   }
 
   const leader = agents.find((a) => a.id === leaderId)
@@ -139,8 +149,15 @@ export default function TeamPage() {
                           >🗑</button>
                         </div>
                       </div>
-                      <div className="text-gray-500 text-xs">
-                        👑 {tLeader?.name ?? '?'} + {team.memberIds.length}명
+                      <div className="text-gray-500 text-xs flex items-center gap-2">
+                        <span>👑 {tLeader?.name ?? '?'} + {team.memberIds.length}명</span>
+                        {team.defaultMode && team.defaultMode !== 'solo' && (
+                          <span className={`text-[10px] px-1 rounded ${
+                            team.defaultMode === 'collaborate' ? 'bg-blue-400/20 text-blue-400' : 'bg-purple-400/20 text-purple-400'
+                          }`}>
+                            {team.defaultMode === 'collaborate' ? '🤝' : '👑→⚔'}
+                          </span>
+                        )}
                       </div>
                       {team.description && (
                         <div className="text-gray-600 text-xs mt-1 truncate">{team.description}</div>
@@ -210,6 +227,38 @@ export default function TeamPage() {
             </div>
           </div>
 
+          {/* Relation Mode */}
+          <div className="mb-4">
+            <label className="label">협업 모드</label>
+            <div className="flex gap-1">
+              {([
+                { mode: 'solo' as RelationMode, icon: '🗡️', label: '개인플레이' },
+                { mode: 'collaborate' as RelationMode, icon: '🤝', label: '같이 논의' },
+                { mode: 'hierarchical' as RelationMode, icon: '👑→⚔', label: '상하관계' },
+              ]).map(({ mode, icon, label }) => (
+                <button
+                  key={mode}
+                  onClick={() => setDefaultMode(mode)}
+                  className={`flex-1 py-1.5 px-2 rounded text-xs transition-all border ${
+                    defaultMode === mode
+                      ? 'border-yellow-400 bg-yellow-400/15 text-yellow-400'
+                      : 'border-game-border text-gray-500 hover:border-gray-500'
+                  }`}
+                >
+                  {icon} {label}
+                </button>
+              ))}
+            </div>
+            {memberIds.length >= 2 && (
+              <button
+                onClick={() => setShowRelationEditor(true)}
+                className="mt-2 w-full btn-secondary text-xs py-1.5"
+              >
+                ⚙ 개별 관계 설정
+              </button>
+            )}
+          </div>
+
           {/* Output directory */}
           <div className="mb-4">
             <label className="label">📁 결과 저장 폴더</label>
@@ -251,6 +300,17 @@ export default function TeamPage() {
           </div>
         </div>
       </div>
+
+      {/* Relation Editor Modal */}
+      {showRelationEditor && (
+        <RelationEditor
+          agents={agents.filter(a => memberIds.includes(a.id) || a.id === leaderId)}
+          relations={relations}
+          defaultMode={defaultMode}
+          onSave={(newRelations) => { setRelations(newRelations); setShowRelationEditor(false) }}
+          onClose={() => setShowRelationEditor(false)}
+        />
+      )}
     </div>
   )
 }
