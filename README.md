@@ -199,4 +199,4 @@ File tools (`read_file`, `edit_file`) wait indefinitely (15s poll) for files tha
 
 ## License
 
-MIT License. 자유롭게 사용 가능하나, 사용 시 원작자 고지(저작권 문구 포함)가 필수입니다. 자세한 내용은 [LICENSE](./LICENSE) 참조.
+Apache License 2.0. 자유롭게 사용·수정·배포 가능하며, 사용 시 원작자 고지 및 변경사항 명시가 필수입니다. 자세한 내용은 [LICENSE](./LICENSE) 참조.
