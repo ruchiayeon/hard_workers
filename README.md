@@ -197,6 +197,15 @@ File tools (`read_file`, `edit_file`) wait indefinitely (15s poll) for files tha
 
 ---
 
+## Contributors
+
+| | Name | Role |
+|---|---|---|
+| <img src="https://github.com/ruchiayeon.png" width="50"> | **Ga yeon Lee** ([@ruchiayeon](https://github.com/ruchiayeon)) | Creator & Developer |
+| <img src="https://github.com/anthropics.png" width="50"> | **Claude** (Anthropic) | AI Pair Programmer |
+
+---
+
 ## License
 
 Apache License 2.0. 자유롭게 사용·수정·배포 가능하며, 사용 시 원작자 고지 및 변경사항 명시가 필수입니다. 자세한 내용은 [LICENSE](./LICENSE) 참조.
